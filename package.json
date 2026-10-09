@@ -1,0 +1,18 @@
+{
+  "name": "linknest-downloader",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Responsive Facebook and Instagram media downloader interface with a configurable, authorized resolver",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test"
+  },
+  "engines": { "node": ">=20.11.0" },
+  "dependencies": {
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "helmet": "^8.1.0"
+  }
+}

@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark light" />
+  <meta name="description" content="A beautiful one-link interface for downloading authorized Facebook and Instagram media." />
+  <title>LinkNest — Save what inspires you</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="stylesheet" href="/styles.css" />
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <svg class="icon-definitions" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="i-arrow-down" viewBox="0 0 24 24"><path d="M12 3v12m0 0 5-5m-5 5-5-5M4 18v3h16v-3"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7.1-7.1l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7.1 7.1l1.7-1.7"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.5 13A9 9 0 0 1 11 3.5 9 9 0 1 0 20.5 13Z"/></symbol>
+    <symbol id="i-arrow-up-right" viewBox="0 0 24 24"><path d="M6 18 18 6M8 6h10v10"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7V5Z"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 16-5-5L5 21"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-paste" viewBox="0 0 24 24"><rect x="5" y="5" width="15" height="17" rx="2"/><path d="M9 5V3h7v2M9 12h7M9 16h5"/></symbol>
+    <symbol id="i-insta" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="6"/><circle cx="12" cy="12" r="4"/><circle cx="18" cy="6" r="1" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-fb" viewBox="0 0 24 24"><path d="M15 22v-9h3l.5-4H15V7c0-1 .5-1.5 1.6-1.5H19V2.1A28 28 0 0 0 15.8 2C12.5 2 11 4 11 7v2H8v4h3v9"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 2 2.3 7.7L22 12l-7.7 2.3L12 22l-2.3-7.7L2 12l7.7-2.3L12 2Z"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-loader" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 1-9 9"/></symbol>
+  </svg>
+
+  <div class="site-shell">
+    <div class="background-glow glow-a"></div>
+    <div class="background-glow glow-b"></div>
+    <div class="background-grid" aria-hidden="true"></div>
+
+    <header class="topbar wrap">
+      <a class="brand" href="#home" aria-label="LinkNest, back to home">
+        <span class="brand-icon"><svg><use href="#i-arrow-down"/></svg></span>
+        <span>linknest<span class="brand-dot">.</span></span>
+      </a>
+      <nav class="nav-links" aria-label="Main navigation">
+        <a href="#how-it-works">How it works</a>
+        <a href="#supported">Supported media</a>
+      </nav>
+      <div class="top-actions">
+        <span class="top-action-label">Made for the moments.</span>
+        <button id="theme-toggle" class="theme-switch" type="button" aria-label="Switch to light mode" aria-pressed="false">
+          <svg class="moon"><use href="#i-moon"/></svg>
+          <svg class="sun"><use href="#i-sun"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <main id="home">
+      <section class="hero wrap" aria-labelledby="hero-heading">
+        <div class="hero-content">
+          <div class="eyebrow"><span class="eyebrow-light"></span> SIMPLE. FAST. ALL IN ONE PLACE.</div>
+          <h1 id="hero-heading">The good stuff<br />deserves to <span class="gradient-ink">stay.</span></h1>
+          <p class="hero-subtitle">Spotted a video, reel or photo worth keeping? Drop the link below and save media you have permission to download.</p>
+          <div class="hero-benefits">
+            <span><svg><use href="#i-check"/></svg> No account needed</span>
+            <span><svg><use href="#i-check"/></svg> Quality options</span>
+            <span><svg><use href="#i-check"/></svg> No link history</span>
+          </div>
+        </div>
+
+        <div class="hero-art" aria-hidden="true">
+          <div class="art-halo"></div>
+          <div class="art-card art-card-back">
+            <img src="/demo/photo.jpg" alt="" />
+            <span class="mini-label">PHOTO SAVED <svg><use href="#i-check"/></svg></span>
+          </div>
+          <div class="art-card art-card-front">
+            <img src="/demo/reel-poster.jpg" alt="" />
+            <span class="play-bubble"><svg><use href="#i-play"/></svg></span>
+            <div class="art-overlay"><span>YOUR NEXT FAVORITE</span><strong>Save the moment.</strong><span class="art-progress"><i></i></span></div>
+          </div>
+          <div class="floating-download"><svg><use href="#i-arrow-down"/></svg><span>Ready to save</span><svg class="checkmark"><use href="#i-check"/></svg></div>
+          <div class="sparkle sparkle-one">✳</div><div class="sparkle sparkle-two">✦</div>
+        </div>
+      </section>
+
+      <section class="tool wrap" aria-labelledby="tool-heading">
+        <div class="tool-header">
+          <div><span class="section-kicker">YOUR DOWNLOAD SPACE</span><h2 id="tool-heading">One link is all it takes.</h2></div>
+          <div class="ready-pill"><span></span> READY WHEN YOU ARE</div>
+        </div>
+        <form id="download-form" class="input-panel" novalidate>
+          <label for="media-url">PASTE YOUR LINK</label>
+          <div class="input-main">
+            <div class="input-area">
+              <svg class="url-icon"><use href="#i-link"/></svg>
+              <input id="media-url" type="url" name="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="Paste a Facebook or Instagram link here..." aria-describedby="link-description" maxlength="1500" />
+              <button class="paste-button" id="paste-button" type="button"><svg><use href="#i-paste"/></svg><span>Paste</span></button>
+            </div>
+            <button class="submit-button" id="submit-button" type="submit"><span>Get media</span><svg><use href="#i-arrow-up-right"/></svg></button>
+          </div>
+          <div class="input-meta" id="link-description">
+            <span class="detected-label" id="detected-label"><span class="meta-dot"></span> Waiting for your link</span>
+            <span class="hint-text">Public &amp; authorized content only <svg><use href="#i-shield"/></svg></span>
+          </div>
+        </form>
+        <div class="notice-banner" id="demo-banner" hidden>
+          <svg><use href="#i-spark"/></svg>
+          <div><strong>Interactive demo mode</strong><span>Downloads are sample files, not media from your pasted link. Connect an authorized resolver to fetch real content.</span></div>
+        </div>
+        <div class="demo-examples" id="demo-examples" hidden>
+          <span>Try a sample:</span>
+          <button type="button" data-example="https://www.instagram.com/reel/DEMO2026/">Instagram reel <svg><use href="#i-arrow-up-right"/></svg></button>
+          <button type="button" data-example="https://www.facebook.com/reel/123456789/">Facebook reel <svg><use href="#i-arrow-up-right"/></svg></button>
+          <button type="button" data-example="https://www.instagram.com/sample_creator/">Profile picture <svg><use href="#i-arrow-up-right"/></svg></button>
+        </div>
+        <div id="message-area" class="message-area" role="alert" aria-live="assertive" hidden></div>
+        <section class="results" id="results" aria-label="Resolved media" aria-live="polite" hidden></section>
+      </section>
+
+      <section id="supported" class="supported wrap" aria-labelledby="supported-heading">
+        <div class="section-heading"><div><span class="section-kicker">MADE FOR YOUR FEED</span><h2 id="supported-heading">Your favorites, one place.</h2></div><p>Simple support for the moments you want to revisit.</p></div>
+        <div class="supported-grid">
+          <article class="support-card fb-color">
+            <div class="support-top"><span class="support-icon"><svg><use href="#i-fb"/></svg></span><svg class="diagonal"><use href="#i-arrow-up-right"/></svg></div>
+            <div class="support-bottom"><h3>Facebook videos</h3><p>Save public videos in available resolutions.</p><span class="feature-badge">SD · HD</span></div>
+          </article>
+          <article class="support-card purple-color">
+            <div class="support-top"><span class="support-icon"><svg><use href="#i-play"/></svg></span><svg class="diagonal"><use href="#i-arrow-up-right"/></svg></div>
+            <div class="support-bottom"><h3>Facebook &amp; IG reels</h3><p>Keep short-form videos you have rights to.</p><span class="feature-badge">SD · HD</span></div>
+          </article>
+          <article class="support-card pink-color">
+            <div class="support-top"><span class="support-icon"><svg><use href="#i-image"/></svg></span><svg class="diagonal"><use href="#i-arrow-up-right"/></svg></div>
+            <div class="support-bottom"><h3>Instagram photos</h3><p>Preserve photo posts and multi-image sets.</p><span class="feature-badge">ORIGINAL</span></div>
+          </article>
+          <article class="support-card peach-color">
+            <div class="support-top"><span class="support-icon"><svg><use href="#i-user"/></svg></span><svg class="diagonal"><use href="#i-arrow-up-right"/></svg></div>
+            <div class="support-bottom"><h3>Profile pictures</h3><p>Get the best size your provider offers.</p><span class="feature-badge">FULL SIZE*</span></div>
+          </article>
+        </div>
+        <p class="support-footnote">*Available quality and access depend on the authorized media source.</p>
+      </section>
+
+      <section id="how-it-works" class="steps-section wrap" aria-labelledby="steps-heading">
+        <div class="steps-intro"><span class="section-kicker">EASY AS 1, 2, 3</span><h2 id="steps-heading">Three tiny steps.<br /><span class="gradient-ink">That's literally it.</span></h2><p>Less tapping around. More time enjoying the things you save.</p></div>
+        <div class="steps-list">
+          <div class="step"><span class="step-number">01</span><div><h3>Copy the link</h3><p>Find a supported public post, video or profile and copy its URL.</p></div><svg><use href="#i-link"/></svg></div>
+          <div class="step"><span class="step-number">02</span><div><h3>Paste and preview</h3><p>We'll identify the platform and show available media from your connected source.</p></div><svg><use href="#i-image"/></svg></div>
+          <div class="step"><span class="step-number">03</span><div><h3>Pick your quality</h3><p>Choose an available resolution or download an image in one click.</p></div><svg><use href="#i-arrow-down"/></svg></div>
+        </div>
+      </section>
+
+      <section class="closing wrap" aria-label="Start saving"><div><span class="section-kicker">FOUND SOMETHING GOOD?</span><h2>Keep the moments<br />that <span class="gradient-ink">matter.</span></h2></div><a class="closing-cta" href="#tool-heading">Paste your link <svg><use href="#i-arrow-up-right"/></svg></a></section>
+    </main>
+    <footer class="footer wrap"><div class="footer-logo"><span class="brand-icon"><svg><use href="#i-arrow-down"/></svg></span><strong>linknest.</strong><span>Keep what inspires you.</span></div><p>For personal use only. Download only media you own or have permission to save. Respect copyright, privacy, and Facebook/Instagram platform terms. Not affiliated with Meta.</p><div class="footer-bottom"><span>© 2026 LinkNest · Made with care.</span><span>No accounts. No stored links.</span></div></footer>
+  </div>
+</body>
+</html>
