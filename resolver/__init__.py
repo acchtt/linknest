@@ -1,0 +1,1 @@
+"""LinkNest authorized public-media resolver service."""

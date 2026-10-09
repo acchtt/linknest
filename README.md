@@ -58,6 +58,37 @@ Visit the URL printed by Wrangler (usually `http://localhost:8788`). For local r
 
 **Tests:** `npm test` checks the URL classifier, Node tokens, and Cloudflare Pages Function contracts (including demo mode, HMAC expiry, allowlist, proxy headers, and security errors). Tests do not substitute for an actual Cloudflare staging deployment or authorized live-provider integration.
 
+
+## Deploy the public-only resolver on Railway
+
+The **Railway resolver** is separate from the Cloudflare Pages website. It uses `yt-dlp` to inspect **publicly accessible** Facebook videos/Reels and Instagram Reels/photo posts, returning direct CDN URLs **only when the platform makes them available without login**. The resolver does not ask for social credentials, load cookie jars, bypass private content, download/transcode files, or store link histories. Real platform restrictions and rate limits mean successful extraction cannot be guaranteed. Instagram **full-size profile pictures remain unsupported** without an appropriately authorized account API. Only use this for content you have rights to download and when allowed by applicable platform terms.
+
+1. In Railway, create a project from **GitHub repository `acchtt/linknest`**, branch `main`. Set the **root directory to the repository root `/`**. Railway will detect the root `Dockerfile`; `railway.json` sets the health check to `GET /health`. This service hosts the Python resolver, **not** the Cloudflare frontend.
+2. In your Railway service's **Variables**, set `RESOLVER_API_KEY` to a **random 32+-character secret**. For example, run `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"` locally to create one. Do **not** commit the value to the repository. Optional: set `MEDIA_HOSTS=fbcdn.net,cdninstagram.com` (default). Railway supplies `PORT` automatically.
+3. In **Railway → Service → Settings → Networking**, generate a **public HTTPS domain**. Verify `https://YOUR-RAILWAY-DOMAIN/health` returns JSON with `status: ok`. The `/api/resolve` endpoint requires your bearer key; `/health` does not.
+4. In **Cloudflare Pages → linknest-3bg → Settings → Variables and Secrets** (production environment), configure:
+
+   | Variable | Value | Confidential? |
+   | --- | --- | --- |
+   | `RESOLVER_API_URL` | `https://YOUR-RAILWAY-DOMAIN/api/resolve` | No |
+   | `RESOLVER_API_KEY` | **Exactly the same random key** as Railway | **Yes, encrypted** |
+   | `DOWNLOAD_SIGNING_SECRET` | A **different** random 32+-character secret | **Yes, encrypted** |
+   | `MEDIA_HOSTS` | `fbcdn.net,cdninstagram.com` | No |
+   | `MAX_DOWNLOAD_MB` | e.g. `100` | No |
+
+5. **Redeploy Cloudflare Pages** after saving environment variables. Verify `https://linknest-3bg.pages.dev/api/health` shows `{ "status": "ok", "demo": false }` and `GET /api/config` shows `{ "demo": false }`. The site will now attempt permitted public extraction instead of serving sample content.
+6. Test with **one public post that you own or have permission to download**. If the upstream requests login or blocks CDN access, the site should show a clear error; it must **not** pretend to have downloaded the original. A Reel's separate HD/SD options appear only when progressive MP4s with audio are actually available. Instagram post carousels are capped at 10 items.
+
+**Security and operations:** Never use social platform account cookies or private content. Rate-limit `/api/resolve` at Cloudflare (e.g. WAF/Rate Limiting); requests invoke a short-lived subprocess with a hard timeout and a concurrency limit of two. The public Railway domain is not a general-purpose open proxy: its resolve endpoint requires a server-to-server bearer secret. Keep keys in the platform secret stores, not in source, client JavaScript, or build logs. Rotating either secret invalidates in-flight download links. Cloudflare and Railway may have their own service metadata/access logs even though application URL histories are not stored.
+
+To test the resolver locally without installing `yt-dlp` (using mocked metadata):
+
+```bash
+python -m unittest discover -s tests -p 'test_resolver.py' -v
+```
+
+For actual extraction, install `pip install -r resolver/requirements.txt`, run `RESOLVER_API_KEY=<your_random_key> python -m resolver.app`, and make an authenticated POST to `http://localhost:8080/api/resolve`. The service reads `PORT` when provided. An authenticated API response is metadata only, not the media file itself.
+
 ## Run locally
 
 Requires **Node.js 20.11+** (tested with Node.js 22).
@@ -134,7 +165,7 @@ The resolver should return **404/422** for unavailable/private/unsupported media
 | `GET /api/preview/:token` | Stream signed image preview |
 | `GET /api/download/:token` | Stream signed media as attachment |
 
-Tokens expire after 10 minutes and are invalid when the process restarts. The app keeps no download database. The signed token does contain an encoded direct URL when using a provider; therefore, **treat each link as sensitive and short-lived**. The external resolver and CDN will necessarily receive network requests, so check their data processing policies and do not claim that those services avoid logging.
+Tokens expire after 10 minutes. Cloudflare-signed links remain valid across requests and deploys while `DOWNLOAD_SIGNING_SECRET` is unchanged; legacy local Express tokens may become invalid after a restart if its signing secret is not configured. The app keeps no download database. The signed token does contain an encoded direct URL when using a provider; therefore, **treat each link as sensitive and short-lived**. The external resolver and CDN will necessarily receive network requests, so check their data processing policies and do not claim that those services avoid logging.
 
 ## Production deployment notes
 
@@ -148,6 +179,9 @@ Tokens expire after 10 minutes and are invalid when the process restarts. The ap
 
 ```text
 linknest-downloader/
+├── railway.json              # Railway Docker deployment and health check
+├── Dockerfile                # Python resolver Docker container
+├── resolver/                 # Authenticated, public-only media metadata resolver
 ├── functions/                # Cloudflare Pages API routes and Web Crypto helpers
 ├── server.js                 # Optional Express routes and security headers
 ├── src/

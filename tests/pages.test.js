@@ -98,3 +98,36 @@ test('Cloudflare routing declaration restricts Functions to /api', async () => {
   const routes = JSON.parse(await readFile(new URL('../public/_routes.json', import.meta.url), 'utf8'));
   assert.deepEqual(routes.include, ['/api/*']);
 });
+
+test('Connected resolver: preserves public-only errors and handles provider overload', async () => {
+  const original = globalThis.fetch;
+  const liveEnv = { ...env, RESOLVER_API_URL: 'https://resolver.example/api/resolve', RESOLVER_API_KEY: 'server-only-token' };
+  try {
+    globalThis.fetch = async (resource, options) => {
+      assert.equal(resource.href ?? resource, liveEnv.RESOLVER_API_URL);
+      assert.equal(options.headers.Authorization, 'Bearer server-only-token');
+      return new Response(JSON.stringify({ error: 'Busy' }), { status: 429, headers: { 'content-type': 'application/json' } });
+    };
+    const busy = await resolvePost(request({ url }, liveEnv));
+    assert.equal(busy.status, 503);
+    assert.equal((await busy.json()).code, 'SERVICE_BUSY');
+    globalThis.fetch = async () => new Response(JSON.stringify({ code: 'PROFILE_UNAVAILABLE' }), { status: 422 });
+    const profile = await resolvePost(request({ url: 'https://www.instagram.com/exampleprofile/' }, liveEnv));
+    assert.equal(profile.status, 422);
+    assert.match((await profile.json()).error, /authorized account API/i);
+  } finally { globalThis.fetch = original; }
+});
+
+test('Connected resolver: refuses untrusted media before signing download URLs', async () => {
+  const original = globalThis.fetch;
+  const liveEnv = { ...env, RESOLVER_API_URL: 'https://resolver.example/api/resolve' };
+  try {
+    globalThis.fetch = async () => Response.json({ title: 'Test video', items: [{
+      kind: 'video', thumbnailUrl: 'https://allowed.example/p.jpg',
+      variants: [{ label: 'HD', url: 'https://evil.example/v.mp4', mime: 'video/mp4' }],
+    }] });
+    const response = await resolvePost(request({ url }, liveEnv));
+    assert.equal(response.status, 502);
+    assert.equal((await response.json()).code, 'HOST_NOT_ALLOWED');
+  } finally { globalThis.fetch = original; }
+});

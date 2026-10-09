@@ -170,7 +170,13 @@ export async function resolveRequest(context) {
     });
   } catch { return errorJson('The media service is unavailable. Try again.', 'SERVICE_UNAVAILABLE', 503); }
   if ([401, 403].includes(upstream.status)) return errorJson('The media service did not authorize this request.', 'UNAUTHORIZED', 502);
-  if ([404, 422].includes(upstream.status)) return errorJson('Content is private, unavailable, or unsupported.', 'MEDIA_UNAVAILABLE', 422);
+  if (upstream.status === 429) return errorJson('The media service is busy. Try again shortly.', 'SERVICE_BUSY', 503);
+  if ([404, 422].includes(upstream.status)) {
+    const message = classification.type === 'profile'
+      ? 'Full-size Instagram profile photos are not supported by this public-only resolver. An authorized account API is required.'
+      : 'This post is private, unavailable, rate-limited, or unsupported by public extraction.';
+    return errorJson(message, 'MEDIA_UNAVAILABLE', 422);
+  }
   if (!upstream.ok) return errorJson('The media service returned an error.', 'PROVIDER_ERROR', 502);
   let providerData;
   try { providerData = await upstream.json(); }

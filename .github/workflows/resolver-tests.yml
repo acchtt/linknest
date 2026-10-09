@@ -1,0 +1,30 @@
+name: LinkNest resolver tests
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'resolver/**'
+      - 'tests/test_resolver.py'
+      - 'Dockerfile'
+      - 'railway.json'
+      - '.github/workflows/resolver-tests.yml'
+  pull_request:
+    paths:
+      - 'resolver/**'
+      - 'tests/test_resolver.py'
+      - 'Dockerfile'
+      - 'railway.json'
+      - '.github/workflows/resolver-tests.yml'
+  workflow_dispatch:
+jobs:
+  resolver:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate syntax
+        run: python -m compileall -q resolver
+      - name: Run backend tests
+        run: python -m unittest discover -s tests -p 'test_resolver.py' -v
