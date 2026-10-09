@@ -122,9 +122,12 @@ function renderResult(data) {
     for (const variant of item.variants) {
       const anchor = document.createElement('a');
       anchor.className = 'download-option';
-      // Never interpolate provider HTML: only use same-origin tokenized routes.
-      if (typeof variant.downloadUrl !== 'string' || !variant.downloadUrl.startsWith('/api/download/')) continue;
+      // Only use same-origin download routes or bundled sample files.
+      if (typeof variant.downloadUrl !== 'string' ||
+          !(/^\/api\/download\/[A-Za-z0-9._-]+$/.test(variant.downloadUrl) ||
+            /^\/demo\/(?:reel-(?:hd|sd)\.mp4|(?:avatar|photo)\.jpg)$/.test(variant.downloadUrl))) continue;
       anchor.href = variant.downloadUrl;
+      if (variant.downloadUrl.startsWith('/demo/')) anchor.download = variant.filename || 'linknest-sample';
       anchor.append(icon('arrow-down'));
       const label = document.createElement('span');
       label.append(textEl('strong', '', variant.label || 'Download'));

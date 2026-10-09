@@ -1,6 +1,6 @@
 # LinkNest — Facebook & Instagram Media Downloader UI
 
-A responsive, privacy-conscious web app with **vanilla JavaScript, HTML/CSS, and a Node.js/Express backend**. No database, accounts, cookies, request logs, analytics, or saved link history.
+A responsive, privacy-conscious web app with **vanilla JavaScript, HTML/CSS, Cloudflare Pages Functions and an optional Node.js/Express local backend**. No database, accounts, cookies, request logs, analytics, or saved link history.
 
 **Important:** The project works out of the box in **clearly labelled DEMO MODE**. This lets you test detection, previews, quality selection, downloading, error handling and responsiveness with original sample files. Real Facebook/Instagram media retrieval requires an **authorized resolver** configured through environment variables. Do not mistake sample files for content fetched from a pasted link. Official platform API access is permission-scoped and does not offer unrestricted downloads for arbitrary public posts or full-sized personal profile pictures.
 
@@ -14,6 +14,49 @@ A responsive, privacy-conscious web app with **vanilla JavaScript, HTML/CSS, and
 - Helpful errors for invalid, private, removed, restricted, unsupported media.
 - Server-side tokenized media proxy, upstream HTTPS hostname allowlist, redirect validation, short-lived HMAC tokens, content type restrictions and size cap.
 - Demo previews/MP4s are original local assets and work without API keys.
+
+## Deploy on Cloudflare Pages (GitHub)
+
+The repository is **prepared for Cloudflare Pages**, with a static `public/` site and serverless API endpoints in the root `functions/` directory. This does **not** require a separate Express deployment. The Express backend remains for optional local use.
+
+1. Go to **Cloudflare Dashboard → Workers & Pages → Create application → Pages → Connect to Git**.
+2. Connect your GitHub account and choose **`acchtt/linknest`**, branch **`main`**.
+3. For the build settings use:
+
+   | Cloudflare setting | Value |
+   | --- | --- |
+   | Framework preset | `None` |
+   | Build command | Leave blank (no build needed) |
+   | Build output directory | `public` |
+   | Root directory | `/` (repository root) |
+
+4. Deploy. Cloudflare automatically picks up the root `functions/` directory for `/api/config`, `/api/resolve`, `/api/health`, `/api/preview/:token`, and `/api/download/:token`. Static sample JPG/MP4 files are served directly from `public/demo/`. Routing is restricted to `/api/*` in `public/_routes.json` to avoid charging Function invocations for static assets.
+5. Open your assigned `https://<project>.pages.dev` URL. Initially, the site is in clearly marked **DEMO MODE** with working sample preview and download links.
+
+**Real media integration (optional):** In **Workers & Pages → your Pages project → Settings → Variables and Secrets**, add these in the desired environment, then redeploy:
+
+| Binding name | Kind | Value |
+| --- | --- | --- |
+| `RESOLVER_API_URL` | Variable | HTTPS endpoint of a resolver you operate/are authorized to use |
+| `RESOLVER_API_KEY` | **Encrypted secret** | Resolver authorization key, if required |
+| `DOWNLOAD_SIGNING_SECRET` | **Encrypted secret** | Random string **32+ characters**; keep unchanged across deployments |
+| `MEDIA_HOSTS` | Variable | Comma-separated HTTPS CDN hostnames for authorized returned media |
+| `MAX_DOWNLOAD_MB` | Variable | Download size cap, default `100` in Pages Functions (up to `350`) |
+
+Generate a signing secret with `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`. Do **not** commit it to GitHub, put it in browser JavaScript, or place it in your Cloudflare `public/` directory. A missing/invalid resolver endpoint or a signing secret shorter than 32 characters causes real-mode requests to return a configuration error; no silent demo fallback when a resolver is configured.
+
+**Cloudflare limits:** Large file streaming and bandwidth are subject to Cloudflare's active service terms and plan limits. For heavy traffic, add Cloudflare edge rate-limiting/WAF protection on `/api/resolve` and `/api/download/*`; limit access without storing URL histories. Uploads and public/private content access are not supported. A static Cloudflare Pages deployment without Functions would only show UI and would not process real URLs.
+
+**Local Pages Functions development:** Install dependencies and run:
+
+```bash
+npm install
+npm run dev:pages
+```
+
+Visit the URL printed by Wrangler (usually `http://localhost:8788`). For local real-resolver testing, put `RESOLVER_API_URL`, `RESOLVER_API_KEY`, `DOWNLOAD_SIGNING_SECRET`, and `MEDIA_HOSTS` in a git-ignored `.dev.vars` file. Cloudflare reads it via `context.env`. To run just the legacy Express backend, use `npm run dev` (default `http://localhost:3000`) with `.env` instead. Both modes remain supported, but signed tokens are not interchangeable between Node and Cloudflare.
+
+**Tests:** `npm test` checks the URL classifier, Node tokens, and Cloudflare Pages Function contracts (including demo mode, HMAC expiry, allowlist, proxy headers, and security errors). Tests do not substitute for an actual Cloudflare staging deployment or authorized live-provider integration.
 
 ## Run locally
 
@@ -105,13 +148,16 @@ Tokens expire after 10 minutes and are invalid when the process restarts. The ap
 
 ```text
 linknest-downloader/
-├── server.js                 # Express routes and security headers
+├── functions/                # Cloudflare Pages API routes and Web Crypto helpers
+├── server.js                 # Optional Express routes and security headers
 ├── src/
 │   ├── config.js            # Environment config
 │   ├── resolver.js          # Resolver adapter, response validation, demo data
 │   ├── stream.js            # Secure media streaming and redirect checks
 │   └── tokens.js            # HMAC-signed 10-minute media tokens
 ├── public/
+│   ├── _routes.json         # Only route /api/* through Pages Functions
+│   ├── _headers             # CSP/security headers for static assets
 │   ├── index.html           # Semantic frontend
 │   ├── styles.css           # Responsive dark/light styling
 │   ├── app.js               # Fetch, previews, theme, interactions
