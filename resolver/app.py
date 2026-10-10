@@ -76,7 +76,10 @@ class Handler(BaseHTTPRequestHandler):
                 return self.respond(502, {"error": "Media extraction failed.", "code": "EXTRACTOR_FAILED"})
             if done.returncode == 2:
                 return self.respond(422, {"error": payload.get("error", "Public media unavailable"),
-                                          "code": (payload.get("code") if platform == "instagram" and kind == "photo" and\n                                                   payload.get("code") in {"PHOTO_LOGIN_GATE", "PHOTO_RATE_LIMITED",\n                                                   "PHOTO_CHALLENGE", "PHOTO_ACCESS_BLOCKED", "PHOTO_NO_DIRECT_IMAGES",\n                                                   "PHOTO_EXTRACTOR_ERROR"} else "MEDIA_UNAVAILABLE")})
+                                          "code": (payload.get("code") if platform == "instagram" and kind == "photo" and
+                                                   payload.get("code") in {"PHOTO_LOGIN_GATE", "PHOTO_RATE_LIMITED",
+                                                   "PHOTO_CHALLENGE", "PHOTO_ACCESS_BLOCKED", "PHOTO_NO_DIRECT_IMAGES",
+                                                   "PHOTO_EXTRACTOR_ERROR"} else "MEDIA_UNAVAILABLE")})
             if done.returncode != 0:
                 return self.respond(502, {"error": "Media extraction failed.", "code": "EXTRACTOR_FAILED"})
             return self.respond(200, payload)
