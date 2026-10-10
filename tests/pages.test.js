@@ -106,6 +106,7 @@ test('Connected resolver: preserves public-only errors and handles provider over
     globalThis.fetch = async (resource, options) => {
       assert.equal(resource.href ?? resource, liveEnv.RESOLVER_API_URL);
       assert.equal(options.headers.Authorization, 'Bearer server-only-token');
+      assert.equal(options.redirect, 'manual');
       return new Response(JSON.stringify({ error: 'Busy' }), { status: 429, headers: { 'content-type': 'application/json' } });
     };
     const busy = await resolvePost(request({ url }, liveEnv));
@@ -129,5 +130,21 @@ test('Connected resolver: refuses untrusted media before signing download URLs',
     const response = await resolvePost(request({ url }, liveEnv));
     assert.equal(response.status, 502);
     assert.equal((await response.json()).code, 'HOST_NOT_ALLOWED');
+  } finally { globalThis.fetch = original; }
+});
+
+test('Connected resolver rejects upstream redirects without following credentials', async () => {
+  const original = globalThis.fetch;
+  const liveEnv = { ...env, RESOLVER_API_URL: 'https://resolver.example/api/resolve', RESOLVER_API_KEY: 'server-only-token' };
+  try {
+    globalThis.fetch = async (resource, options) => {
+      assert.equal(resource, liveEnv.RESOLVER_API_URL);
+      assert.equal(options.redirect, 'manual');
+      assert.equal(options.headers.Authorization, 'Bearer server-only-token');
+      return new Response(null, { status: 302, headers: { location: 'https://evil.example/steal-token' } });
+    };
+    const response = await resolvePost(request({ url }, liveEnv));
+    assert.equal(response.status, 502);
+    assert.equal((await response.json()).code, 'PROVIDER_REDIRECT');
   } finally { globalThis.fetch = original; }
 });

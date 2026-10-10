@@ -162,13 +162,18 @@ export async function resolveRequest(context) {
   }
   let upstream;
   try {
-    upstream = await fetch(endpoint, {
-      method: 'POST', redirect: 'error',
+    upstream = await fetch(endpoint.href, {
+      method: 'POST', redirect: 'manual',
       headers: { 'Content-Type': 'application/json', ...(env.RESOLVER_API_KEY ? { Authorization: `Bearer ${env.RESOLVER_API_KEY}` } : {}) },
       body: JSON.stringify({ url: classification.normalizedUrl, platform: classification.platform, type: classification.type }),
       signal: AbortSignal.timeout(15000),
     });
   } catch { return errorJson('The media service is unavailable. Try again.', 'SERVICE_UNAVAILABLE', 503); }
+  // Never forward API credentials to a redirect target. Edge Workers reject redirect:'error'.
+  if (upstream.status >= 300 && upstream.status < 400) {
+    await upstream.body?.cancel().catch(() => {});
+    return errorJson('The media service redirected unexpectedly.', 'PROVIDER_REDIRECT', 502);
+  }
   if ([401, 403].includes(upstream.status)) return errorJson('The media service did not authorize this request.', 'UNAUTHORIZED', 502);
   if (upstream.status === 429) return errorJson('The media service is busy. Try again shortly.', 'SERVICE_BUSY', 503);
   if ([404, 422].includes(upstream.status)) {

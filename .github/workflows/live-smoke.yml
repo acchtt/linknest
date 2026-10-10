@@ -17,6 +17,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Run frontend and Pages Functions unit tests
+        run: npm test
       - name: Verify public Cloudflare Pages deployment
         env:
           LINKNEST_URL: https://linknest-3bg.pages.dev
