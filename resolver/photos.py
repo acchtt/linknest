@@ -80,7 +80,10 @@ def extract_photo_post(url):
         image_extractor = extractor.find(url)
         if image_extractor is None or image_extractor.category != "instagram":
             raise PhotoExtractionError("PHOTO_EXTRACTOR_ERROR", "The Instagram photo link is not supported by the image extractor.")
-        return parse_photo_messages(image_extractor.items())
+        # gallery-dl's Extractor.__iter__ initializes the session, cookies
+        # and Instagram API client before it calls .items().
+        # Calling .items() directly raises an internal AttributeError.
+        return parse_photo_messages(iter(image_extractor))
     except MediaUnavailable:
         raise
     except Exception as exc:

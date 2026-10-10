@@ -154,6 +154,31 @@ class PhotoPostTests(unittest.TestCase):
         ])
         self.assertEqual(len(output["items"]), 1)
 
+    def test_gallery_extractor_must_initialize_before_items(self):
+        from unittest.mock import patch
+        from resolver.photos import extract_photo_post
+
+        class FakeExtractor:
+            category = "instagram"
+            def __init__(self):
+                self.initialized = False
+            def initialize(self):
+                self.initialized = True
+            def items(self):
+                if not self.initialized:
+                    raise AttributeError("Instagram API client is uninitialized")
+                yield (3, "https://scontent.cdninstagram.com/verified.jpg", {"extension": "jpg"})
+            def __iter__(self):
+                self.initialize()
+                return self.items()
+
+        fake = FakeExtractor()
+        with patch("gallery_dl.extractor.find", return_value=fake):
+            result = extract_photo_post("https://www.instagram.com/p/C123test/")
+        self.assertTrue(fake.initialized)
+        self.assertEqual(result["items"][0]["kind"], "image")
+        self.assertEqual(len(result["items"]), 1)
+
     def test_installed_gallery_dl_matches_instagram_photo_posts(self):
         # Matcher only, does not access Instagram or retrieve media.
         from gallery_dl import extractor
