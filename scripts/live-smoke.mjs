@@ -130,7 +130,7 @@ if (demoMode === true) {
     });
     expect(response.status === 200, `Diagnostics HTTP ${response.status}`);
     const data = await response.json();
-    return `urlMatches=${data.resolverUrlMatches}, hostMatches=${data.expectedHostMatches}, auth=${data.authConfigured}, signing=${data.signingSecretConfigured}, directStatus=${data.directStatus ?? 'none'}, directError=${data.directErrorType || 'none'}`;
+    return `urlMatches=${data.resolverUrlMatches}, hostMatches=${data.expectedHostMatches}, auth=${data.authConfigured}, signing=${data.signingSecretConfigured}, directStatus=${data.directStatus ?? 'none'}, directError=${data.directErrorType || 'none'}: ${data.directErrorMessage || 'none'}, simpleStatus=${data.simpleFetchStatus ?? 'none'}, simpleError=${data.simpleFetchError || 'none'}`;
   });
   // Safe integration check: the Railway resolver rejects Instagram profile URLs
   // before invoking yt-dlp. This verifies Pages -> Railway auth and reachability,
