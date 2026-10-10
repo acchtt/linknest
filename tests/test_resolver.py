@@ -169,3 +169,24 @@ class PhotoPostTests(unittest.TestCase):
             result = extract("https://www.instagram.com/p/DeRiLutEwdi/?img_index=1")
         self.assertEqual(result, payload)
         mocked.assert_called_once_with("https://www.instagram.com/p/DeRiLutEwdi/?img_index=1")
+
+
+class PhotoAccessDiagnosticsTests(unittest.TestCase):
+    def test_login_redirect_reports_server_login_gate(self):
+        from resolver.photos import classified_failure
+        error = classified_failure(RuntimeError("HTTP redirect to login page (https://www.instagram.com/accounts/login/)"))
+        self.assertEqual(error.code, "PHOTO_LOGIN_GATE")
+        self.assertNotIn("https:", str(error))
+    def test_rate_limit_is_not_private(self):
+        from resolver.photos import classified_failure
+        error = classified_failure(RuntimeError("429 Too Many Requests"))
+        self.assertEqual(error.code, "PHOTO_RATE_LIMITED")
+    def test_forbidden_and_challenge(self):
+        from resolver.photos import classified_failure
+        self.assertEqual(classified_failure(RuntimeError("403 Forbidden")).code, "PHOTO_ACCESS_BLOCKED")
+        self.assertEqual(classified_failure(RuntimeError("Challenge required")).code, "PHOTO_CHALLENGE")
+    def test_unknown_error_is_not_labeled_private(self):
+        from resolver.photos import classified_failure
+        error = classified_failure(RuntimeError("upstream library error containing URL and token"))
+        self.assertEqual(error.code, "PHOTO_EXTRACTOR_ERROR")
+        self.assertNotIn("token", str(error))

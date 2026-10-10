@@ -38,7 +38,7 @@ if __name__ == "__main__":
         result = extract(sys.argv[1])
         print(json.dumps(result, ensure_ascii=False, separators=(",", ":")))
     except (MediaUnavailable, InvalidLink) as exc:
-        print(json.dumps({"error": str(exc), "code": "MEDIA_UNAVAILABLE"}))
+        print(json.dumps({"error": str(exc), "code": getattr(exc, "code", "MEDIA_UNAVAILABLE")}))
         sys.exit(2)
     except Exception:
         print(json.dumps({"error": "The extractor could not process this post.", "code": "EXTRACTOR_FAILED"}))

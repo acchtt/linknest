@@ -210,3 +210,7 @@ linknest-downloader/
 ## Instagram photo posts (image extractor)
 
 Image-only Instagram posts were previously passed through `yt-dlp`, which is a video tool and rejects image-only posts. The Python Railway resolver now routes Instagram `/p/.../` URLs through **gallery-dl** for images and carousels. This processes public metadata only: no account cookies, authentication, file downloads or storage. It selects direct HTTPS photo URLs only on approved CDN hosts, up to 10 items. A photo extractor failure is reported as `PHOTO_EXTRACTION_UNAVAILABLE`, **not** a claim that the Instagram post is private. Instagram may deny unauthenticated API access to otherwise public posts, so successful extraction cannot be guaranteed on every link. Mixed carousel videos are not returned by this photo-only path. The Cloudflare request timeout is 35 seconds and the frontend wait is 45 seconds to accommodate photo extraction.
+
+### Public Instagram photo extraction diagnostics
+
+The image extractor now distinguishes `PHOTO_LOGIN_GATE` (the *server* is redirected to a login page), `PHOTO_RATE_LIMITED`, `PHOTO_CHALLENGE`, `PHOTO_ACCESS_BLOCKED`, `PHOTO_NO_DIRECT_IMAGES`, and `PHOTO_EXTRACTOR_ERROR`. A public post viewed in an ordinary browser can still be login-gated from a cloud server. No account cookies or bypasses are used or stored. These codes do not imply the post itself is private. The status describes the extractor request, not content visibility.

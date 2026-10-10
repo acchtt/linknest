@@ -154,14 +154,14 @@ test('Instagram photo extractor errors are not mislabeled as private posts', asy
   const liveEnv = { ...env, RESOLVER_API_URL: 'https://resolver.example/api/resolve', RESOLVER_API_KEY: 'server-only-token' };
   try {
     globalThis.fetch = async () => Response.json({
-      code: 'PHOTO_EXTRACTION_UNAVAILABLE',
-      error: 'No public image URLs returned',
+      code: 'PHOTO_LOGIN_GATE',
+      error: 'Instagram redirected to a login form',
     }, { status: 422 });
     const response = await resolvePost(request({ url: 'https://www.instagram.com/p/DeRiLutEwdi/?img_index=1' }, liveEnv));
     assert.equal(response.status, 422);
     const payload = await response.json();
-    assert.equal(payload.code, 'PHOTO_EXTRACTION_UNAVAILABLE');
-    assert.match(payload.error, /does not mean the post is private/);
+    assert.equal(payload.code, 'PHOTO_LOGIN_GATE');
+    assert.match(payload.error, /requiring a login from our server/);
   } finally {
     globalThis.fetch = original;
   }

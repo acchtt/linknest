@@ -182,10 +182,18 @@ export async function resolveRequest(context) {
       const providerError = await upstream.json();
       providerCode = String(providerError?.code || '');
     } catch { /* The provider did not return machine-readable failure metadata. */ }
-    if (classification.type === 'photo' && providerCode === 'PHOTO_EXTRACTION_UNAVAILABLE') {
-      return errorJson(
-        'Instagram did not expose downloadable photos to our public photo extractor. This does not mean the post is private.',
-        'PHOTO_EXTRACTION_UNAVAILABLE', 422);
+    if (classification.type === 'photo') {
+      const photoErrors = {
+        PHOTO_LOGIN_GATE: "Instagram is requiring a login from our server to retrieve the photos, even though the post may be public in your browser. LinkNest cannot access it anonymously.",
+        PHOTO_RATE_LIMITED: "Instagram temporarily rate-limited our server. Try again later.",
+        PHOTO_CHALLENGE: "Instagram requires extra verification from our server. The post is not necessarily private.",
+        PHOTO_ACCESS_BLOCKED: "Instagram denied our server access to photo metadata. This does not mean the post is private.",
+        PHOTO_NO_DIRECT_IMAGES: "The photo extractor returned no supported direct image URLs. The post may still be publicly viewable.",
+        PHOTO_EXTRACTOR_ERROR: "The Instagram photo extractor encountered an unexpected platform response. We cannot confirm the post is private.",
+      };
+      if (Object.hasOwn(photoErrors, providerCode)) {
+        return errorJson(photoErrors[providerCode], providerCode, 422);
+      }
     }
     const message = classification.type === 'profile'
       ? 'Full-size Instagram profile photos are not supported by this public-only resolver. An authorized account API is required.'
