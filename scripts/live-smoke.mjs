@@ -124,6 +124,14 @@ if (demoMode === true) {
     expect(data.status === 'ok' && data.engine === 'yt-dlp', 'Unexpected Railway health JSON');
     return '200 OK, yt-dlp resolver reachable';
   });
+  await check('Cloudflare resolver configuration diagnostics', async () => {
+    const response = await request('/api/diagnose?probe=1', {
+      signal: AbortSignal.timeout(12000),
+    });
+    expect(response.status === 200, `Diagnostics HTTP ${response.status}`);
+    const data = await response.json();
+    return `urlMatches=${data.resolverUrlMatches}, hostMatches=${data.expectedHostMatches}, auth=${data.authConfigured}, signing=${data.signingSecretConfigured}, directStatus=${data.directStatus ?? 'none'}, directError=${data.directErrorType || 'none'}`;
+  });
   // Safe integration check: the Railway resolver rejects Instagram profile URLs
   // before invoking yt-dlp. This verifies Pages -> Railway auth and reachability,
   // without scraping content, accessing cookies, or downloading any media.
