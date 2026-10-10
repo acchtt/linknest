@@ -114,7 +114,22 @@ if (demoMode === true) {
     return '200 image/jpeg';
   });
 } else if (demoMode === false) {
-  console.log('INFO Provider mode detected; skipping arbitrary real-media retrieval without permission.');
+  // Safe integration check: the Railway resolver rejects Instagram profile URLs
+  // before invoking yt-dlp. This verifies Pages -> Railway auth and reachability,
+  // without scraping content, accessing cookies, or downloading any media.
+  await check('Cloudflare to Railway authenticated resolver', async () => {
+    const response = await request('/api/resolve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: 'https://www.instagram.com/instagram/' }),
+      signal: AbortSignal.timeout(40000), // allow for Railway serverless wakeup
+    });
+    const json = await response.json();
+    expect(response.status === 422, `Expected profile-unavailable 422, got ${response.status} (${json.code || 'unknown'})`);
+    expect(json.code === 'MEDIA_UNAVAILABLE', `Unexpected API result: ${json.code}`);
+    expect(/profile/i.test(json.error), 'Expected resolver-specific profile limitation');
+    return '422 profile unavailable (Railway reachable, authenticated)';
+  });
 }
 
 const failed = results.filter(x => !x.pass);
