@@ -114,6 +114,16 @@ if (demoMode === true) {
     return '200 image/jpeg';
   });
 } else if (demoMode === false) {
+  await check('Railway public health', async () => {
+    const response = await fetch('https://linknest-resolver-production.up.railway.app/health', {
+      redirect: 'error',
+      signal: AbortSignal.timeout(35000),
+    });
+    expect(response.status === 200, `Railway /health returned ${response.status}`);
+    const data = await response.json();
+    expect(data.status === 'ok' && data.engine === 'yt-dlp', 'Unexpected Railway health JSON');
+    return '200 OK, yt-dlp resolver reachable';
+  });
   // Safe integration check: the Railway resolver rejects Instagram profile URLs
   // before invoking yt-dlp. This verifies Pages -> Railway auth and reachability,
   // without scraping content, accessing cookies, or downloading any media.
