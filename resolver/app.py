@@ -67,7 +67,7 @@ class Handler(BaseHTTPRequestHandler):
             # Run each extraction in a bounded subprocess so overlong jobs can be killed.
             try:
                 done = subprocess.run([sys.executable, "-m", "resolver.extract", normalized],
-                                      capture_output=True, text=True, timeout=12, check=False)
+                                      capture_output=True, text=True, timeout=28, check=False)
             except subprocess.TimeoutExpired:
                 return self.respond(503, {"error": "Media service timed out.", "code": "TIMEOUT"})
             try:
@@ -75,7 +75,8 @@ class Handler(BaseHTTPRequestHandler):
             except (json.JSONDecodeError, ValueError):
                 return self.respond(502, {"error": "Media extraction failed.", "code": "EXTRACTOR_FAILED"})
             if done.returncode == 2:
-                return self.respond(422, {"error": payload.get("error", "Public media unavailable"), "code": "MEDIA_UNAVAILABLE"})
+                return self.respond(422, {"error": payload.get("error", "Public media unavailable"),
+                                          "code": "PHOTO_EXTRACTION_UNAVAILABLE" if platform == "instagram" and kind == "photo" else "MEDIA_UNAVAILABLE"})
             if done.returncode != 0:
                 return self.respond(502, {"error": "Media extraction failed.", "code": "EXTRACTOR_FAILED"})
             return self.respond(200, payload)

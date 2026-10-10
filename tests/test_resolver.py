@@ -122,3 +122,50 @@ class HttpTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+class PhotoPostTests(unittest.TestCase):
+    def test_image_messages_and_carousel(self):
+        from resolver.photos import parse_photo_messages
+        messages = [
+            (2, "", {"id": "photo-post"}),
+            (3, "https://scontent.cdninstagram.com/1.jpg?x=1", {"extension": "jpg", "num": 1}),
+            (3, "https://scontent.cdninstagram.com/2.jpg?x=2", {"extension": "jpg", "num": 2}),
+            (3, "https://scontent.cdninstagram.com/video.mp4", {"extension": "mp4", "num": 3}),
+        ]
+        result = parse_photo_messages(messages)
+        self.assertEqual(len(result["items"]), 2)
+        self.assertEqual(result["items"][0]["kind"], "image")
+        self.assertEqual(result["items"][1]["variants"][0]["mime"], "image/jpeg")
+
+    def test_rejects_non_cdn_and_empty(self):
+        from resolver.photos import parse_photo_messages
+        from resolver.formats import MediaUnavailable
+        with self.assertRaises(MediaUnavailable):
+            parse_photo_messages([(3, "https://evil.example/1.jpg", {"extension": "jpg"})])
+        with self.assertRaises(MediaUnavailable):
+            parse_photo_messages([])
+
+    def test_rejects_duplicate_images_and_untrusted_media(self):
+        from resolver.photos import parse_photo_messages
+        url = "https://scontent.cdninstagram.com/1.jpg"
+        output = parse_photo_messages([
+            (3, url, {"extension": "jpg"}),
+            (3, url, {"extension": "jpg"}),
+            (3, "http://scontent.cdninstagram.com/2.jpg", {"extension": "jpg"}),
+        ])
+        self.assertEqual(len(output["items"]), 1)
+
+    def test_installed_gallery_dl_matches_instagram_photo_posts(self):
+        # Matcher only, does not access Instagram or retrieve media.
+        from gallery_dl import extractor
+        found = extractor.find("https://www.instagram.com/p/C123test/?img_index=1")
+        self.assertIsNotNone(found)
+        self.assertEqual(found.category, "instagram")
+
+    def test_route_uses_gallery_for_instagram_photos(self):
+        from unittest.mock import patch
+        from resolver.extract import extract
+        payload = {"title": "Photos", "items": [{"kind": "image"}]}
+        with patch("resolver.photos.extract_photo_post", return_value=payload) as mocked:
+            result = extract("https://www.instagram.com/p/DeRiLutEwdi/?img_index=1")
+        self.assertEqual(result, payload)
+        mocked.assert_called_once_with("https://www.instagram.com/p/DeRiLutEwdi/?img_index=1")

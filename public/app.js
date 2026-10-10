@@ -157,7 +157,7 @@ form.addEventListener('submit', async (event) => {
   setBusy(true);
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 22000);
+    const timeout = setTimeout(() => controller.abort(), 45000);
     let response;
     try {
       response = await fetch('/api/resolve', {

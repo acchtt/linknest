@@ -10,6 +10,9 @@ def extract(url: str):
     platform, kind, normalized = classify(url)
     if kind == "profile":
         raise MediaUnavailable("Full-size profile pictures are not available through this public-only resolver.")
+    if platform == "instagram" and kind == "photo":
+        from .photos import extract_photo_post
+        return extract_photo_post(normalized)
     try:
         import yt_dlp
     except ImportError as exc:

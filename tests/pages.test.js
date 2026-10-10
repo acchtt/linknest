@@ -148,3 +148,21 @@ test('Connected resolver rejects upstream redirects without following credential
     assert.equal((await response.json()).code, 'PROVIDER_REDIRECT');
   } finally { globalThis.fetch = original; }
 });
+
+test('Instagram photo extractor errors are not mislabeled as private posts', async () => {
+  const original = globalThis.fetch;
+  const liveEnv = { ...env, RESOLVER_API_URL: 'https://resolver.example/api/resolve', RESOLVER_API_KEY: 'server-only-token' };
+  try {
+    globalThis.fetch = async () => Response.json({
+      code: 'PHOTO_EXTRACTION_UNAVAILABLE',
+      error: 'No public image URLs returned',
+    }, { status: 422 });
+    const response = await resolvePost(request({ url: 'https://www.instagram.com/p/DeRiLutEwdi/?img_index=1' }, liveEnv));
+    assert.equal(response.status, 422);
+    const payload = await response.json();
+    assert.equal(payload.code, 'PHOTO_EXTRACTION_UNAVAILABLE');
+    assert.match(payload.error, /does not mean the post is private/);
+  } finally {
+    globalThis.fetch = original;
+  }
+});

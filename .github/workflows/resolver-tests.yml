@@ -24,6 +24,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Install resolver dependencies
+        run: python -m pip install -r resolver/requirements.txt
       - name: Validate syntax
         run: python -m compileall -q resolver
       - name: Run backend tests

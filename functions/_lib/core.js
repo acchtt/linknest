@@ -166,7 +166,7 @@ export async function resolveRequest(context) {
       method: 'POST', redirect: 'manual',
       headers: { 'Content-Type': 'application/json', ...(env.RESOLVER_API_KEY ? { Authorization: `Bearer ${env.RESOLVER_API_KEY}` } : {}) },
       body: JSON.stringify({ url: classification.normalizedUrl, platform: classification.platform, type: classification.type }),
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(35000),
     });
   } catch { return errorJson('The media service is unavailable. Try again.', 'SERVICE_UNAVAILABLE', 503); }
   // Never forward API credentials to a redirect target. Edge Workers reject redirect:'error'.
@@ -177,9 +177,19 @@ export async function resolveRequest(context) {
   if ([401, 403].includes(upstream.status)) return errorJson('The media service did not authorize this request.', 'UNAUTHORIZED', 502);
   if (upstream.status === 429) return errorJson('The media service is busy. Try again shortly.', 'SERVICE_BUSY', 503);
   if ([404, 422].includes(upstream.status)) {
+    let providerCode = '';
+    try {
+      const providerError = await upstream.json();
+      providerCode = String(providerError?.code || '');
+    } catch { /* The provider did not return machine-readable failure metadata. */ }
+    if (classification.type === 'photo' && providerCode === 'PHOTO_EXTRACTION_UNAVAILABLE') {
+      return errorJson(
+        'Instagram did not expose downloadable photos to our public photo extractor. This does not mean the post is private.',
+        'PHOTO_EXTRACTION_UNAVAILABLE', 422);
+    }
     const message = classification.type === 'profile'
       ? 'Full-size Instagram profile photos are not supported by this public-only resolver. An authorized account API is required.'
-      : 'This post is private, unavailable, rate-limited, or unsupported by public extraction.';
+      : 'The public extractor could not access downloadable media for this post; that does not establish that it is private.';
     return errorJson(message, 'MEDIA_UNAVAILABLE', 422);
   }
   if (!upstream.ok) return errorJson('The media service returned an error.', 'PROVIDER_ERROR', 502);
